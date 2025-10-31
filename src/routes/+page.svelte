@@ -13,11 +13,12 @@
 		: DEFAULT_BACKEND_URL;
 
 	let content = $state('');
-	let render = $state('png');
+	let render = $state('svg');
 	let size = $state(300);
 	let shape = $state('square');
 	let embed = $state(false);
 	let qrCodeUrl = $state(null);
+	let svgContent = $state(null);
 	let error = $state(null);
 	let loading = $state(false);
 	let backendUrl = $state(initialBackendUrl);
@@ -40,6 +41,7 @@
 		loading = true;
 		error = null;
 		qrCodeUrl = null;
+		svgContent = null;
 
 		try {
 			const params = new URLSearchParams({
@@ -69,8 +71,11 @@
 
 			if (render === 'svg') {
 				const svgText = await response.text();
-				const blob = new Blob([svgText], { type: 'image/svg+xml' });
-				qrCodeUrl = URL.createObjectURL(blob);
+				// Store raw SVG for inline rendering
+				svgContent = svgText;
+				// Also store as data URL for download
+				const encoded = encodeURIComponent(svgText);
+				qrCodeUrl = `data:image/svg+xml,${encoded}`;
 			} else {
 				const blob = await response.blob();
 				qrCodeUrl = URL.createObjectURL(blob);
@@ -124,29 +129,62 @@
 					></textarea>
 				</div>
 
-				<!-- Render Format -->
-				<div>
-					<label for="render" class="block text-sm font-medium text-gray-700 mb-2">
-						Render Format
-					</label>
-					<div class="flex gap-4">
-						<label class="flex items-center cursor-pointer">
-							<input
-								type="radio"
-								bind:group={render}
-								value="png"
-								class="mr-2 text-blue-600 focus:ring-blue-500"
-							/>
-							<span class="text-gray-700">PNG</span>
+				<!-- Render Format, Shape, and Embed in one row -->
+				<div class="flex flex-wrap items-end gap-4">
+					<!-- Render Format -->
+					<div class="flex-1 min-w-[120px]">
+						<label for="render" class="block text-sm font-medium text-gray-700 mb-2">
+							Render Format
 						</label>
+						<div class="flex gap-4">
+							<label class="flex items-center cursor-pointer">
+								<input
+									type="radio"
+									bind:group={render}
+									value="png"
+									class="mr-2 text-blue-600 focus:ring-blue-500"
+								/>
+								<span class="text-gray-700">PNG</span>
+							</label>
+							<label class="flex items-center cursor-pointer">
+								<input
+									type="radio"
+									bind:group={render}
+									value="svg"
+									class="mr-2 text-blue-600 focus:ring-blue-500"
+								/>
+								<span class="text-gray-700">SVG</span>
+							</label>
+						</div>
+					</div>
+
+					<!-- Shape Selection -->
+					<div class="flex-1 min-w-[150px]">
+						<label for="shape" class="block text-sm font-medium text-gray-700 mb-2">
+							Module Shape
+						</label>
+						<select
+							id="shape"
+							bind:value={shape}
+							class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+						>
+							{#each shapes as s}
+								<option value={s.value}>{s.label}</option>
+							{/each}
+						</select>
+					</div>
+
+					<!-- Embed Image -->
+					<div class="flex items-center mb-2">
 						<label class="flex items-center cursor-pointer">
 							<input
-								type="radio"
-								bind:group={render}
-								value="svg"
-								class="mr-2 text-blue-600 focus:ring-blue-500"
+								type="checkbox"
+								bind:checked={embed}
+								class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
 							/>
-							<span class="text-gray-700">SVG</span>
+							<span class="ml-3 text-sm font-medium text-gray-700">
+								Embed image in center
+							</span>
 						</label>
 					</div>
 				</div>
@@ -173,54 +211,6 @@
 					</div>
 				{/if}
 
-				<!-- Shape Selection -->
-				<div>
-					<label for="shape" class="block text-sm font-medium text-gray-700 mb-2">
-						Module Shape
-					</label>
-					<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-						{#each shapes as s}
-							<label class="flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-400 {shape === s.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}">
-								<input
-									type="radio"
-									bind:group={shape}
-									value={s.value}
-									class="mr-2 text-blue-600 focus:ring-blue-500"
-								/>
-								<span class="text-gray-700 font-medium">{s.label}</span>
-							</label>
-						{/each}
-					</div>
-				</div>
-
-				<!-- Embed Image -->
-				<div class="flex items-center">
-					<label class="flex items-center cursor-pointer">
-						<input
-							type="checkbox"
-							bind:checked={embed}
-							class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-						/>
-						<span class="ml-3 text-sm font-medium text-gray-700">
-							Embed image in center
-						</span>
-					</label>
-				</div>
-
-				<!-- Backend URL -->
-				<div>
-					<label for="backendUrl" class="block text-sm font-medium text-gray-700 mb-2">
-						Backend URL
-					</label>
-					<input
-						type="text"
-						id="backendUrl"
-						bind:value={backendUrl}
-						placeholder="http://localhost:8080"
-						class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					/>
-				</div>
-
 				<!-- Submit Button -->
 				<button
 					type="submit"
@@ -233,14 +223,24 @@
 				<!-- QR Code Preview - Automatically displayed when available -->
 				{#if qrCodeUrl}
 					<div class="mt-6 pt-6 border-t border-gray-200 transition-opacity duration-300">
-						<div class="text-center">
+						<div class="flex flex-col items-center">
 							<h3 class="text-lg font-semibold text-gray-900 mb-4">QR Code Preview</h3>
-							<div class="inline-block p-4 bg-gray-50 rounded-lg mb-4 shadow-sm">
-								<img
-									src={qrCodeUrl}
-									alt="Generated QR Code"
-									class="max-w-full h-auto mx-auto"
-								/>
+							<div class="flex justify-center items-center mb-6">
+								<div class="inline-block p-4 bg-gray-50 rounded-lg shadow-sm">
+									{#if render === 'svg' && svgContent}
+										<div class="inline-block max-w-full mx-auto" style="width: 300px; height: 300px;">
+											<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+												{@html svgContent}
+											</div>
+										</div>
+									{:else if qrCodeUrl}
+										<img
+											src={qrCodeUrl}
+											alt="Generated QR Code"
+											class="max-w-full h-auto mx-auto"
+										/>
+									{/if}
+								</div>
 							</div>
 							<button
 								onclick={downloadQRCode}
