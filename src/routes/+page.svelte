@@ -1,4 +1,17 @@
 <script>
+	const DEFAULT_BACKEND_URL = 'http://localhost:8080';
+	
+	// Use a simple approach that works at runtime
+	// PUBLIC_BACKEND_URL from environment will be injected by Vite at build/dev time
+	// For runtime, it's accessible via import.meta.env
+	const envUrl = typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_BACKEND_URL
+		? import.meta.env.PUBLIC_BACKEND_URL
+		: undefined;
+	
+	const initialBackendUrl = envUrl
+		? (envUrl.startsWith('http') ? envUrl : `http://${envUrl}`)
+		: DEFAULT_BACKEND_URL;
+
 	let content = $state('');
 	let render = $state('png');
 	let size = $state(300);
@@ -7,7 +20,7 @@
 	let qrCodeUrl = $state(null);
 	let error = $state(null);
 	let loading = $state(false);
-	let backendUrl = $state('http://localhost:8080');
+	let backendUrl = $state(initialBackendUrl);
 
 	const shapes = [
 		{ value: 'square', label: 'Square' },
@@ -216,6 +229,28 @@
 				>
 					{loading ? 'Generating...' : 'Generate QR Code'}
 				</button>
+
+				<!-- QR Code Preview - Automatically displayed when available -->
+				{#if qrCodeUrl}
+					<div class="mt-6 pt-6 border-t border-gray-200 transition-opacity duration-300">
+						<div class="text-center">
+							<h3 class="text-lg font-semibold text-gray-900 mb-4">QR Code Preview</h3>
+							<div class="inline-block p-4 bg-gray-50 rounded-lg mb-4 shadow-sm">
+								<img
+									src={qrCodeUrl}
+									alt="Generated QR Code"
+									class="max-w-full h-auto mx-auto"
+								/>
+							</div>
+							<button
+								onclick={downloadQRCode}
+								class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg"
+							>
+								Download QR Code
+							</button>
+						</div>
+					</div>
+				{/if}
 			</form>
 		</div>
 
@@ -224,28 +259,6 @@
 			<div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6">
 				<p class="font-medium">Error</p>
 				<p>{error}</p>
-			</div>
-		{/if}
-
-		<!-- QR Code Display -->
-		{#if qrCodeUrl}
-			<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-				<div class="text-center">
-					<h2 class="text-2xl font-bold text-gray-900 mb-4">Generated QR Code</h2>
-					<div class="inline-block p-4 bg-gray-50 rounded-lg mb-4">
-						<img
-							src={qrCodeUrl}
-							alt="Generated QR Code"
-							class="max-w-full h-auto mx-auto"
-						/>
-					</div>
-					<button
-						onclick={downloadQRCode}
-						class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all shadow-md hover:shadow-lg"
-					>
-						Download QR Code
-					</button>
-				</div>
 			</div>
 		{/if}
 	</div>
