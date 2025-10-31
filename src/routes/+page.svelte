@@ -228,7 +228,7 @@
 							<div class="flex justify-center items-center mb-6">
 								<div class="inline-block p-4 bg-gray-50 rounded-lg shadow-sm">
 									{#if render === 'svg' && svgContent}
-										<div class="inline-block max-w-full mx-auto" style="width: 300px; height: 300px;">
+										<div class="inline-block max-w-full mx-auto" style="width: 600px; height: 600px;">
 											<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
 												{@html svgContent}
 											</div>
