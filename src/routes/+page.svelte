@@ -1,16 +1,16 @@
 <script>
+	// Get backend URL from server-side load function (supports runtime configuration)
+	let { data } = $props();
+	
 	const DEFAULT_BACKEND_URL = 'http://localhost:8080';
 	
-	// Use a simple approach that works at runtime
-	// PUBLIC_BACKEND_URL from environment will be injected by Vite at build/dev time
-	// For runtime, it's accessible via import.meta.env
-	const envUrl = typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_BACKEND_URL
-		? import.meta.env.PUBLIC_BACKEND_URL
-		: undefined;
+	// Normalize the backend URL (ensure it has http:// prefix if missing)
+	const normalizeUrl = (url) => {
+		if (!url) return DEFAULT_BACKEND_URL;
+		return url.startsWith('http') ? url : `http://${url}`;
+	};
 	
-	const initialBackendUrl = envUrl
-		? (envUrl.startsWith('http') ? envUrl : `http://${envUrl}`)
-		: DEFAULT_BACKEND_URL;
+	const initialBackendUrl = normalizeUrl(data?.backendUrl);
 
 	let content = $state('');
 	let render = $state('svg');
