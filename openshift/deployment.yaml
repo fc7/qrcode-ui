@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: qrcode-ui
-        image: quay.io/rh_ee_fcharett/qrcode-ui:0.0.1
-        pullPolicy: Always
+        image: quay.io/rh_ee_fcharett/qrcode-ui:0.0.2
+        pullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
           protocol: TCP
