@@ -109,7 +109,8 @@
 	<div class="max-w-4xl mx-auto">
 		<header class="text-center mb-8">
 			<h1 class="text-4xl font-bold text-gray-900 mb-2">QR Code Generator</h1>
-			<p class="text-gray-600">Generate beautiful QR codes with customizable options</p>
+			<p class="text-gray-600">Generate QR codes with customizable options</p>
+			<p class="text-gray-400">Author: François Charette (<a href="https://github.com/fc7/qrcode-ui">Source code</a>)</p>
 		</header>
 
 		<div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6">
